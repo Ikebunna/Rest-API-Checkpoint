@@ -3,11 +3,12 @@ const connectDB = require("./config/dbConnect");
 const UserModel = require("./models/User");
 const { config } = require("dotenv");
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
 // specify .env path
 config({ path: "./config/.env" });
+
+// create instance of express
+const app = express();
+const PORT = process.env.PORT || 5000;
 
 // Middleware to parse JSON in the req.body
 app.use(express.json());
@@ -15,7 +16,7 @@ app.use(express.json());
 // inititate connection to DB and listen on port
 const startApp = async () => {
   try {
-    await connectDB();
+    await connectDB(); // establish connection to db
     app.listen(PORT, () => console.log(` listening on port ${PORT}`));
   } catch (error) {
     console.error(error);
@@ -27,11 +28,12 @@ startApp();
 // HTTP GET Method to display all users
 app.get("/api/v1/users", async (req, res) => {
   try {
+    // retrieve all users from databasse using model.find()
     const allUsers = await UserModel.find();
     res.status(200).json({ message: "All Users:", allUsers });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: "unable to retrieve data" });
+    res.status(500).json({ error: "server error" });
   }
 });
 
@@ -55,9 +57,10 @@ app.put("/api/v1/:id", async (req, res) => {
     const updatedUser = await UserModel.findByIdAndUpdate(userId, req.body, {
       new: true,
     });
+    // check if user found; return error message if not found
     if (!updatedUser) {
       return res
-        .status(400)
+        .status(404)
         .json({ message: `user with id: ${userId} does not exist` });
     }
     res.status(200).json({ message: "update successful" });
@@ -72,11 +75,12 @@ app.delete("/api/v1/:id", async (req, res) => {
     const userId = req.params.id;
     const userToDelete = await UserModel.findByIdAndDelete(userId);
 
+    // check if user found; return error message if not found
     if (!userToDelete) {
-      return res.status(400).json({ message: "user not found" });
+      return res.status(404).json({ message: "user not found" });
     }
     res.status(200).json({ message: "User Deleted", userToDelete });
   } catch (error) {
-    res.status(400).json({ message: "error deleting user" });
+    res.status(404).json({ message: "error deleting user" });
   }
 });
